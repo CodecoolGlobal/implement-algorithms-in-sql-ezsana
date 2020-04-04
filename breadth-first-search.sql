@@ -39,15 +39,16 @@ CREATE TEMPORARY TABLE friends_edges (
 CREATE INDEX ep1_index ON friends_edges(edge_point_1);
 CREATE INDEX ep2_index ON friends_edges(edge_point_2);
 
-CREATE OR REPLACE FUNCTION insert_values_to_friends_nodes()
+CREATE OR REPLACE FUNCTION insert_values_to_friends_nodes() RETURNS void
 AS $$
     DECLARE
-        names varchar(255) := '{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",' ||
-                                  '"twelve", "thirteen", "fourteen", "fifteen"}';
+        names varchar[] := '{one, two, three, four, five, six, seven, eight, nine, ten, eleven,' ||
+                                  'twelve, thirteen, fourteen, fifteen}';
     BEGIN
         for i in 1..15 loop
-            INSERT INTO friends_nodes VALUES (i, names[i]);
+            EXECUTE format('INSERT INTO friends_nodes VALUES ($1, $2)') USING i, names[i];
         end loop;
+    RETURN;
     end;$$
     LANGUAGE plpgsql;
 
@@ -70,7 +71,7 @@ AS $$
  15 -> 9;
  */
 
-CREATE OR REPLACE FUNCTION insert_values_to_friends_edges()
+CREATE OR REPLACE FUNCTION insert_values_to_friends_edges() RETURNS void
 AS $$
     DECLARE
         edge_node_pairs int[][] := '{{1,2}, {1,4}, {1,6}, {1,10}, {2,8}, {2,11}, {3,7}, {3,10}, {5,6}, {6,8},' ||
@@ -81,6 +82,7 @@ AS $$
         loop
             INSERT INTO friends_edges VALUES (node_pairs[1], node_pairs[2]);
         end loop;
+    RETURN;
     END;$$
     LANGUAGE plpgsql;
 
