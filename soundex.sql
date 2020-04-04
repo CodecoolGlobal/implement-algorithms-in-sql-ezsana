@@ -27,47 +27,24 @@
     5. Append 3 zeros if result contains less than 3 digits. Remove all except first letter and 3 digits after it (This step same as [4.] in explanation above).
  */
 
+SELECT soundex('lilith');
+
 CREATE OR REPLACE FUNCTION soundex(name varchar) RETURNS varchar AS $$
    DECLARE
         first_letter varchar := left(name, 1);
         tempString varchar := '';
         arr varchar[];
         n varchar;
-        arr2 varchar[];
-        len_tempString integer;
     BEGIN
         SELECT into arr string_to_array(name, null);
         foreach n in array arr loop
-            case n
-                when 'a', 'e', 'i', 'o', 'u', 'y', 'h', 'w' then tempString = tempString || '0';
-                when 'b', 'f', 'p', 'v' then tempString = tempString || '1';
-                when 'c', 'g', 'j', 'k', 'q', 's', 'x', 'z' then tempString = tempString || '2';
-                when 'd', 't' then tempString = tempString || '3';
-                when 'l' then tempString = tempString || '4';
-                when 'm', 'n' then tempString = tempString || '5';
-                when 'r' then  tempString = tempString || '6';
-            end case;
+            tempString = tempString || changeLetterToSoundexNumber(n);
         end loop;
-        len_tempString := length(tempString);
-        SELECT INTO arr2 string_to_array(tempString, null);
-        for i in 1..len_tempString-1 loop
-            for j in i+1..len_tempString loop
-                if arr2[i] <> '0' AND arr2[i] = arr2[j] then
-                    arr2[j] := '0';
-                elsif arr2[i] <> arr2[j] then
-                    exit;
-                end if;
-            end loop;
-        end loop;
-        SELECT into tempString array_to_string(array_remove(arr2, '0'), '');
-        case
-            when substring(tempString, 2, 1) = '1' AND first_letter IN ('b', 'f', 'p', 'v') then tempString = substring(tempString, 1, 1) || substring(tempString, 3);
-            when substring(tempString, 2, 1) = '2' AND first_letter IN ('c', 'g', 'j', 'k', 'q', 's', 'x', 'z') then tempString = substring(tempString, 1, 1) || substring(tempString, 3);
-            when substring(tempString, 2, 1) = '3' AND first_letter IN ('d', 't') then tempString = substring(tempString, 1, 1) || substring(tempString, 3);
-            when substring(tempString, 2, 1) = '4' AND first_letter IN ('l') then tempString = substring(tempString, 1, 1) || substring(tempString, 3);
-            when substring(tempString, 2, 1) = '5' AND first_letter IN ('m', 'n') then tempString = substring(tempString, 1, 1) || substring(tempString, 3);
-            when substring(tempString, 2, 1) = '6' AND first_letter IN ('r') then tempString = substring(tempString, 1, 1) || substring(tempString, 3);
-        end case;
+        SELECT INTO arr wordToNumbers(string_to_array(tempString, null));
+        SELECT into tempString array_to_string(array_remove(arr, '0'), '');
+        if substring(tempString, 2, 1) = changeLetterToSoundexNumber(first_letter) then
+            tempString = substring(tempString, 1, 1) || substring(tempString, 3);
+        end if;
         if length(tempString) < 3 then
             tempString = tempString || '0' * (3-length(tempString));
         elsif length(tempString) > 4 then
@@ -79,7 +56,41 @@ CREATE OR REPLACE FUNCTION soundex(name varchar) RETURNS varchar AS $$
     LANGUAGE plpgsql;
 
 
+CREATE OR REPLACE FUNCTION changeLetterToSoundexNumber(letter varchar) RETURNS varchar AS $$
+    DECLARE
+        soundex_number varchar;
+    BEGIN
+        case letter
+                when 'a', 'e', 'i', 'o', 'u', 'y', 'h', 'w' then soundex_number = '0';
+                when 'b', 'f', 'p', 'v' then soundex_number = '1';
+                when 'c', 'g', 'j', 'k', 'q', 's', 'x', 'z' then soundex_number = '2';
+                when 'd', 't' then soundex_number = '3';
+                when 'l' then soundex_number = '4';
+                when 'm', 'n' then soundex_number = '5';
+                when 'r' then soundex_number = '6';
+            end case;
+    RETURN soundex_number;
+    END;
+    $$
+    LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION wordToNumbers(arr varchar[]) RETURNS varchar[] AS $$
+    DECLARE
+        len_arr integer := array_length(arr, 1);
+    BEGIN
+       for i in 1..len_arr-1 loop
+            for j in i+1..len_arr loop
+                if arr[i] <> '0' AND arr[i] = arr[j] then
+                    arr[j] := '0';
+                elsif arr[i] <> arr[j] then
+                    exit;
+                end if;
+            end loop;
+        end loop;
+    RETURN arr;
+    END;
+    $$
+    LANGUAGE plpgsql;
 
 
 
