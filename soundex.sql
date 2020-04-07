@@ -27,9 +27,9 @@
     5. Append 3 zeros if result contains less than 3 digits. Remove all except first letter and 3 digits after it (This step same as [4.] in explanation above).
  */
 
-SELECT soundex('lilith');
+SELECT soundex_northwind('lilith');
 
-CREATE OR REPLACE FUNCTION soundex(name varchar) RETURNS varchar AS $$
+CREATE OR REPLACE FUNCTION soundex_northwind(name varchar) RETURNS varchar AS $$
    DECLARE
         first_letter varchar := left(name, 1);
         tempString varchar := '';
