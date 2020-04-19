@@ -18,7 +18,7 @@ CREATE TABLE employee_soundex (
 INSERT INTO employee_soundex (employee_id, first_name_soundex, last_name_soundex)
 SELECT employee_id, soundex(first_name), soundex(last_name) FROM employees;
 
--- Query results employee records with same soundex or searched name: works only for exact name match
+-- Query results employee records with same soundex or searched name: 
 
 CREATE OR REPLACE FUNCTION getEmployees(keyword varchar) RETURNS TABLE (
                                                                         employees_id employees.employee_id%TYPE,
@@ -34,7 +34,7 @@ CREATE OR REPLACE FUNCTION getEmployees(keyword varchar) RETURNS TABLE (
         FROM employees e
         JOIN employee_soundex es
             on e.employee_id = es.employee_id
-            WHERE (keyword ilike e.first_name OR keyword ilike e.last_name) OR (keyword = es.first_name_soundex OR keyword = es.last_name_soundex);
+            WHERE e.first_name ilike '%' || keyword || '%' OR e.last_name ilike '%' || keyword || '%' OR keyword = es.first_name_soundex OR keyword = es.last_name_soundex;
     END;
     $$
     LANGUAGE plpgsql;
